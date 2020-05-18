@@ -5,42 +5,42 @@ const inquirer = require("inquirer");
 const path = require("path");
 const fs = require("fs");
 
+const render = require("./lib/htmlRenderer");
+let teamArray = [];
+let primeEmp = true;
+let dayOne = true;
+
 const OUTPUT_DIR = path.resolve(__dirname, "output");
 const outputPath = path.join(OUTPUT_DIR, "team.html");
-
-const render = require("./lib/htmlRenderer");
 
 
 // Write code to use inquirer to gather information about the development team members,
 // and to create objects for each team member (using the correct classes as blueprints!)
-function newEmp () {
+function newEmp() {
     return inquirer.prompt([
         {
             type: 'list',
             name: 'role',
             message: "Role within the company?",
             choices: [
-                'Intern',
+                'Manager',
                 'Engineer',
-                'Manager'
+                'Intern'
             ]
         }
-    ]).then(function(response) {
-        if(response.role === 'Manager') {
+    ]).then(function (response) {
+        if (response.role === 'Manager') {
             return newMgr();
         }
-        else if(response.role === 'Engineer') {
+        else if (response.role === 'Engineer') {
             return newEng();
         }
         else if (response.role === 'Intern') {
             return newIntern();
         }
-        else {
-            console.log("Not a valid position");
-        }
     })
 }
-function newMgr () {
+function newMgr() {
     return inquirer.prompt([
         {
             type: 'input',
@@ -62,12 +62,132 @@ function newMgr () {
             name: 'officeNumber',
             message: 'Manager Office Number: '
         }
-    ]).then(function(response) {
-        console.log(response);
+    ]).then(function (response) {
+        noob = new Manager(response.name, response.id, response.email, response.officeNumber);
+        teamArray.push(noob);
     });
 }
-// newEmp();
-// newMgr();
+function newEng() {
+    return inquirer.prompt([
+        {
+            type: 'input',
+            name: 'name',
+            message: 'Engineer Full Name: '
+        },
+        {
+            type: 'input',
+            name: 'id',
+            message: 'Engineer ID: '
+        },
+        {
+            type: 'input',
+            name: 'email',
+            message: 'Engineer Email: '
+        },
+        {
+            type: 'input',
+            name: 'github',
+            message: 'Engineer Github: '
+        }
+    ]).then(function (response) {
+        noob = new Engineer(response.name, response.id, response.email, response.github);
+        teamArray.push(noob);
+    });
+}
+function newIntern() {
+    return inquirer.prompt([
+        {
+            type: 'input',
+            name: 'name',
+            message: 'Intern Full Name: '
+        },
+        {
+            type: 'input',
+            name: 'id',
+            message: 'Intern ID: '
+        },
+        {
+            type: 'input',
+            name: 'email',
+            message: 'Intern Email: '
+        },
+        {
+            type: 'input',
+            name: 'school',
+            message: 'Intern School Location: '
+        }
+    ]).then(function (response) {
+        noob = new Intern(response.name, response.id, response.email, response.school);
+        teamArray.push(noob);
+    });
+}
+// function addMember() {
+//     return inquirer.prompt(
+//         {
+//             type: 'list',
+//             name: 'repeat',
+//             message: 'Add a team member? ',
+//             choices: [
+//                 'YES',
+//                 'NO'
+//             ]
+//         }
+//     ).then(function(response) {
+//             if (response.repeat === 'YES') {
+//                 newEmp();
+//             }
+//             else {
+//                 console.log('Team Complete: ' + teamArray);
+//             }
+//         }
+//     )
+// }
+// addMember();
+async function mainFunction() {
+    // Conditions to create team
+    while (dayOne == true) {
+        if (primeEmp == true) {
+            // Creates first manager
+            await newMgr();
+            primeEmp = false;
+        }
+        else {
+            await inquirer.prompt([
+                {
+                    type: "list",
+                    message: "Would you like to add another team member?",
+                    name: "newMember",
+                    choices: [
+                        "yes",
+                        "no"
+                    ]
+                }
+            ]).then(async function (res) {
+                if (res.newMember == "yes") {
+                    await newEmp();
+                }
+                else {
+                    dayOne = false;
+                    
+                }
+            })
+        }
+    }
+    const html = render(teamArray);
+
+    if (!fs.existsSync(OUTPUT_DIR)) {
+      fs.mkdirSync(OUTPUT_DIR);
+    }
+  
+    fs.writeFile(outputPath, html, (err) => {
+      if (err) throw err;
+      console.log("SUCCESS!");
+    });
+}
+mainFunction();
+
+
+
 
 // After the user has input all employees desired, call the `render` function (required
 // above) and pass in an array containing all employee objects; the `render` function will
